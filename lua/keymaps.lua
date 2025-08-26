@@ -1,6 +1,8 @@
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
+--  change <ESC> with j-j
+vim.keymap.set('i', 'jj', '<Esc>', { desc = 'From I mode to N mode' })
 -- Clear highlights on search when pressing <Esc> in normal mode
 --  See `:help hlsearch`
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
@@ -51,4 +53,34 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   end,
 })
 
+-- File Explorer
+-- nvim-tree
+-- vim.keymap.set('n', '<leader>m', '<Cmd>NvimTreeFocus<CR>', { desc = 'Focus on File Explorer' })
+-- vim.keymap.set('n', '<leader>e', '<Cmd>NvimTreeToggle<CR>', { desc = 'Toggle File Explorer' })
+
+-- lua/keymaps.lua
+
+-- Toggle Oil file explorer with <leader>e
+vim.keymap.set('n', '<leader>e', function()
+  local ok, oil = pcall(require, 'oil')
+  if not ok then
+    vim.notify('oil.nvim is not loaded', vim.log.levels.WARN)
+    return
+  end
+
+  local ft = vim.bo.filetype
+
+  -- If we're not in oil, remember this buffer and open oil
+  if ft ~= 'oil' then
+    vim.g.last_file_buf = vim.api.nvim_get_current_buf()
+    oil.open()
+  else
+    -- If we are in oil, return to last file buffer
+    if vim.g.last_file_buf and vim.api.nvim_buf_is_valid(vim.g.last_file_buf) then
+      vim.api.nvim_set_current_buf(vim.g.last_file_buf)
+    else
+      vim.cmd 'b#' -- fallback: go to alternate buffer
+    end
+  end
+end, { desc = 'Toggle Oil file explorer' })
 -- vim: ts=2 sts=2 sw=2 et
