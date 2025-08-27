@@ -84,26 +84,151 @@ I hope you enjoy your Neovim journey,
 P.S. You can delete this when you're done too. It's your config now! :)
 --]]
 
--- Set <space> as the leader key
--- See `:help mapleader`
---  NOTE: Must happen before plugins are loaded (otherwise wrong leader will be used)
-vim.g.mapleader = ' '
-vim.g.maplocalleader = ' '
+-- Settings for vscode-neovim
+if vim.g.vscode then
+  -- Set <space> as the leader key
+  -- See `:help mapleader`
+  --  NOTE: Must happen before plugins are loaded (otherwise wrong leader will be used)
+  vim.g.mapleader = ' '
 
--- Set to true if you have a Nerd Font installed and selected in the terminal
-vim.g.have_nerd_font = false
+  vim.g.maplocalleader = ' '
 
--- [[ Setting options ]]
-require 'options'
+  -- Set to true if you have a Nerd Font installed and selected in the terminal
+  vim.g.have_nerd_font = true
 
--- [[ Basic Keymaps ]]
-require 'keymaps'
+  -- Make line numbers default
+  vim.opt.number = true
+  -- You can also add relative line numbers, to help with jumping.
+  --  Experiment for yourself to see if you like it!
+  vim.opt.relativenumber = true
+  --
 
--- [[ Install `lazy.nvim` plugin manager ]]
-require 'lazy-bootstrap'
+  -- Enable mouse mode, can be useful for resizing splits for example!
+  vim.opt.mouse = 'a'
 
--- [[ Configure and install plugins ]]
-require 'lazy-plugins'
+  -- Don't show the mode, since it's already in the status line
+  vim.opt.showmode = false
 
--- The line beneath this is called `modeline`. See `:help modeline`
--- vim: ts=2 sts=2 sw=2 et
+  -- Sync clipboard between OS and Neovim.
+  --  Schedule the setting after `UiEnter` because it can increase startup-time.
+  --  Remove this option if you want your OS clipboard to remain independent.
+  --  See `:help 'clipboard'`
+  vim.schedule(function()
+    vim.opt.clipboard = 'unnamedplus'
+  end)
+
+  -- Enable break indent
+  vim.opt.breakindent = true
+
+  -- Save undo history
+  vim.opt.undofile = true
+
+  -- Case-insensitive searching UNLESS \C or one or more capital letters in the search term
+  vim.opt.ignorecase = true
+  vim.opt.smartcase = true
+
+  -- Keep signcolumn on by default
+  vim.opt.signcolumn = 'yes'
+
+  -- Preview substitutions live, as you type!
+  vim.opt.inccommand = 'split'
+  -- Show which line your cursor is on
+  vim.opt.cursorline = true
+
+  -- Minimal number of screen lines to keep above and below the cursor.
+  vim.opt.scrolloff = 10
+
+  -- if performing an operation that would fail due to unsaved changes in the buffer (like `:q`),
+  -- instead raise a dialog asking if you wish to save the current file(s)
+  -- See `:help 'confirm'`
+  vim.opt.confirm = true
+
+  --  quick open init.lua file in vscode
+  vim.keymap.set('n', '<leader>c', function()
+    vim.cmd('edit ' .. vim.fn.stdpath 'config' .. '/init.lua')
+  end, { desc = 'Open init.lua' })
+  --  change <ESC> with j-j
+  vim.keymap.set('i', 'jj', '<Esc>', { desc = 'From I mode to N mode' })
+
+  -- Clear highlights on search when pressing <Esc> in normal mode
+  --  See `:help hlsearch`
+  vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
+
+  -- Highlight when yanking (copying) text
+  --  Try it with `yap` in normal mode
+  --  See `:help vim.highlight.on_yank()`
+  vim.api.nvim_create_autocmd('TextYankPost', {
+    desc = 'Highlight when yanking (copying) text',
+    group = vim.api.nvim_create_augroup('kickstart-highlight-yank', { clear = true }),
+    callback = function()
+      vim.highlight.on_yank()
+    end,
+  })
+
+  -- Bootstrap lazy.nvim (from your bootstrap.lua)
+  require 'lazy-bootstrap'
+
+  -- Now that lazy.nvim path has been prepended by bootstrap.lua,
+  -- require lazy safely and call setup
+
+  -- Now require lazy safely
+  local ok, lazy = pcall(require, 'lazy')
+  if not ok then
+    vim.notify('Failed to load lazy.nvim', vim.log.levels.ERROR)
+    return
+  end
+  -- Set up plugins via lazy.nvim
+  lazy.setup {
+    {
+      'echasnovski/mini.nvim',
+      version = false,
+      config = function()
+        -- Better Around/Inside textobjects
+        --
+        -- Examples:
+        --  - va)  - [V]isually select [A]round [)]paren
+        --  - yinq - [Y]ank [I]nside [N]ext [Q]uote
+        --  - ci'  - [C]hange [I]nside [']quote
+        require('mini.ai').setup { n_lines = 500 }
+
+        -- Add/delete/replace surroundings (brackets, quotes, etc.)
+        -- - saiw) - [S]urround [A]dd [I]nner [W]ord [)]Paren
+        -- - sd'   - [S]urround [D]elete [']quotes
+        -- - sr)'  - [S]urround [R]eplace [)] [']
+        require('mini.surround').setup()
+        -- add pairs of "'{[ automatically
+        require('mini.pairs').setup()
+        -- comment (language-specific) lines in normal or visual mode
+        require('mini.comment').setup()
+        -- gcc - comment a line (visual block) or uncomment commented line (visual block)
+      end,
+    },
+  }
+  -- below is common kickstart-modular init.lua
+else
+  -- Set <space> as the leader key
+  -- See `:help mapleader`
+  --  NOTE: Must happen before plugins are loaded (otherwise wrong leader will be used)
+  vim.g.mapleader = ' '
+  vim.g.maplocalleader = ' '
+
+  -- Set to true if you have a Nerd Font installed and selected in the terminal
+  vim.g.have_nerd_font = true
+
+  -- [[ Setting options ]]
+  require 'options'
+
+  -- [[ Basic Keymaps ]]
+  require 'keymaps'
+
+  -- [[ Install `lazy.nvim` plugin manager ]]
+  require 'lazy-bootstrap'
+
+  -- [[ Configure and install plugins ]]
+  require 'lazy-plugins'
+
+  require 'kickstart.plugins.quarto'
+  -- The line beneath this is called `modeline`. See `:help modeline`
+  -- vim: ts=2 sts=2 sw=2 et
+end
+--
